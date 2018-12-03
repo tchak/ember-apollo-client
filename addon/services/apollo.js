@@ -20,6 +20,7 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 
 import { apolloObservableKey } from 'ember-apollo-client';
 import copyWithExtras from '../utils/copy-with-extras';
+import { resolveWith, rejectWith } from '../apollo/query-resolver';
 
 const EmberApolloSubscription = EmberObject.extend(Evented, {
   lastEvent: null,
@@ -153,32 +154,31 @@ export default Service.extend({
    * @public
    */
   mutate(opts, resultKey) {
-    return this._waitFor(
-      new RSVP.Promise((resolve, reject) => {
-        this.client
-          .mutate(opts)
-          .then(result => {
-            let dataToSend = isNone(resultKey)
-              ? result.data
-              : get(result.data, resultKey);
-            dataToSend = copyWithExtras(dataToSend);
-            return resolve(dataToSend);
-          })
-          .catch(error => {
-            let errors;
-            if (isPresent(error.networkError)) {
-              error.networkError.code = 'network_error';
-              errors = [error.networkError];
-            } else if (isPresent(error.graphQLErrors)) {
-              errors = error.graphQLErrors;
-            }
-            if (errors) {
-              return reject({ errors });
-            }
-            throw error;
-          });
-      })
-    );
+    return this._waitFor((resolve, reject) => {
+      this.client
+        .mutate(opts)
+        .then(resolveWith(resolve, resultKey))
+        .catch(rejectWith(reject));
+    });
+  },
+
+  /**
+   * Executes a single `query` on the Apollo client. The resolved object will
+   * never be updated and does not have to be unsubscribed.
+   *
+   * @method query
+   * @param {!Object} opts The query options used in the Apollo Client query.
+   * @param {String} resultKey The key that will be returned from the resulting response data. If null or undefined, the entire response data will be returned.
+   * @return {!Promise}
+   * @public
+   */
+  query(opts, resultKey = null) {
+    return this._waitFor((resolve, reject) => {
+      this.client
+        .query(opts)
+        .then(resolveWith(resolve, resultKey))
+        .catch(rejectWith(reject));
+    });
   },
 
   /**
@@ -186,17 +186,18 @@ export default Service.extend({
    * query is loaded into the store by another query, the resolved object will
    * be updated with the new data.
    *
-   * When using this method, it is important to call `apolloUnsubscribe()` on
+   * When using this method, it is important to either call `apolloUnsubscribe()` on
    * the resolved data when the route or component is torn down. That tells
    * Apollo to stop trying to send updated data to a non-existent listener.
    *
    * @method watchQuery
    * @param {!Object} opts The query options used in the Apollo Client watchQuery.
    * @param {String} resultKey The key that will be returned from the resulting response data. If null or undefined, the entire response data will be returned.
+   * @param {QueryManager} manager A QueryManager that should track this active watchQuery.
    * @return {!Promise}
    * @public
    */
-  watchQuery(opts, resultKey) {
+  watchQuery(opts, resultKey = null, manager = null) {
     let observable = this.client.watchQuery(opts);
     let subscription;
 
@@ -207,17 +208,19 @@ export default Service.extend({
     };
     mergedProps[apolloObservableKey] = observable;
 
-    return this._waitFor(
-      new RSVP.Promise((resolve, reject) => {
-        // TODO: add an error function here for handling errors
-        subscription = observable.subscribe({
-          next: newDataFunc(observable, resultKey, resolve, mergedProps),
-          error(e) {
-            reject(e);
-          },
-        });
-      })
-    );
+    return this._waitFor((resolve, reject) => {
+      // TODO: add an error function here for handling errors
+      subscription = observable.subscribe({
+        next: newDataFunc(observable, resultKey, resolve, mergedProps),
+        error(e) {
+          reject(e);
+        },
+      });
+
+      if (manager) {
+        manager.trackSubscription(subscription);
+      }
+    });
   },
 
   /**
@@ -231,110 +234,37 @@ export default Service.extend({
    * @method subscribe
    * @param {!Object} opts The query options used in the Apollo Client subscribe.
    * @param {String} resultKey The key that will be returned from the resulting response data. If null or undefined, the entire response data will be returned.
+   * @param {QueryManager} manager A QueryManager that should track this active watchQuery.
    * @return {!Promise}
    * @public
    */
-  subscribe(opts, resultKey = null) {
+  subscribe(opts, resultKey = null, manager = null) {
     const observable = this.client.subscribe(opts);
 
     const obj = EmberApolloSubscription.create();
 
-    return this._waitFor(
-      new RSVP.Promise((resolve, reject) => {
-        let subscription = observable.subscribe({
-          next: newData => {
-            let dataToSend = extractNewData(resultKey, newData);
-            if (dataToSend === null) {
-              // see comment in extractNewData
-              return;
-            }
+    return this._waitFor((resolve, reject) => {
+      let subscription = observable.subscribe({
+        next: newData => {
+          let dataToSend = extractNewData(resultKey, newData);
+          if (dataToSend === null) {
+            // see comment in extractNewData
+            return;
+          }
 
-            run(() => obj._onNewData(dataToSend));
-          },
-          error(e) {
-            reject(e);
-          },
-        });
+          run(() => obj._onNewData(dataToSend));
+        },
+        error(e) {
+          reject(e);
+        },
+      });
 
-        obj._apolloClientSubscription = subscription;
-
-        resolve(obj);
-      })
-    );
-  },
-
-  /**
-   * Executes a single `query` on the Apollo client. The resolved object will
-   * never be updated and does not have to be unsubscribed.
-   *
-   * @method query
-   * @param {!Object} opts The query options used in the Apollo Client query.
-   * @param {String} resultKey The key that will be returned from the resulting response data. If null or undefined, the entire response data will be returned.
-   * @return {!Promise}
-   * @public
-   */
-  query(opts, resultKey) {
-    return this._waitFor(
-      new RSVP.Promise((resolve, reject) => {
-        this.client
-          .query(opts)
-          .then(result => {
-            let response = result.data;
-            if (!isNone(resultKey)) {
-              response = get(response, resultKey);
-            }
-            return resolve(copyWithExtras(response));
-          })
-          .catch(error => {
-            return reject(error);
-          });
-      })
-    );
-  },
-
-  /**
-   * Executes a `watchQuery` on the Apollo client and tracks the resulting
-   * subscription on the provided query manager.
-   *
-   * @method managedWatchQuery
-   * @param {!Object} manager A QueryManager that should track this active watchQuery.
-   * @param {!Object} opts The query options used in the Apollo Client watchQuery.
-   * @param {String} resultKey The key that will be returned from the resulting response data. If null or undefined, the entire response data will be returned.
-   * @return {!Promise}
-   * @private
-   */
-  managedWatchQuery(manager, opts, resultKey) {
-    let observable = this.client.watchQuery(opts);
-
-    return this._waitFor(
-      new RSVP.Promise((resolve, reject) => {
-        let subscription = observable.subscribe({
-          next: newDataFunc(observable, resultKey, resolve),
-          error(e) {
-            reject(e);
-          },
-        });
+      if (manager) {
         manager.trackSubscription(subscription);
-      })
-    );
-  },
+      }
+      obj._apolloClientSubscription = subscription;
 
-  /**
-   * Executes a `subscribe` on the Apollo client and tracks the resulting
-   * subscription on the provided query manager.
-   *
-   * @method managedSubscribe
-   * @param {!Object} manager A QueryManager that should track this active subscribe.
-   * @param {!Object} opts The query options used in the Apollo Client subscribe.
-   * @param {String} resultKey The key that will be returned from the resulting response data. If null or undefined, the entire response data will be returned.
-   * @return {!Promise}
-   * @private
-   */
-  managedSubscribe(manager, opts, resultKey = null) {
-    return this.subscribe(opts, resultKey).then(obj => {
-      manager.trackSubscription(obj._apolloClientSubscription);
-
-      return obj;
+      resolve(obj);
     });
   },
 
@@ -345,7 +275,8 @@ export default Service.extend({
    * @return {!Promise}
    * @private
    */
-  _waitFor(promise) {
+  _waitFor(resolver) {
+    const promise = new RSVP.Promise(resolver);
     this._incrementOngoing();
     return promise.finally(() => this._decrementOngoing());
   },

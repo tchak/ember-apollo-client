@@ -21,7 +21,7 @@ module('Unit | queryManager | ember object query manager', function(hooks) {
     let unsubscribeCalled = 0;
 
     let apolloService = subject.apollo.service;
-    apolloService.managedWatchQuery = (manager, opts) => {
+    apolloService.watchQuery = (opts, _, manager) => {
       assert.deepEqual(opts, { query: 'fakeQuery' });
       manager.trackSubscription({
         unsubscribe() {
@@ -49,7 +49,7 @@ module('Unit | queryManager | ember object query manager', function(hooks) {
     let unsubscribeCalled = 0;
 
     let apolloService = subject.apollo.service;
-    apolloService.managedSubscribe = (manager, opts) => {
+    apolloService.subscribe = (opts, _, manager) => {
       assert.deepEqual(opts, { query: 'fakeSubscription' });
       manager.trackSubscription({
         unsubscribe() {

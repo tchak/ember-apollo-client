@@ -62,7 +62,7 @@ export class QueryManager {
    * @public
    */
   watchQuery(opts, resultKey) {
-    return this.service.managedWatchQuery(this, opts, resultKey);
+    return this.service.watchQuery(opts, resultKey, this);
   }
 
   /**
@@ -81,7 +81,7 @@ export class QueryManager {
    * @public
    */
   subscribe(opts, resultKey) {
-    return this.service.managedSubscribe(this, opts, resultKey);
+    return this.service.subscribe(opts, resultKey, this);
   }
 
   /**
