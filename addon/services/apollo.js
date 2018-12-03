@@ -1,9 +1,7 @@
 import Ember from 'ember';
 
 import Service from '@ember/service';
-import { isPresent } from '@ember/utils';
 import { getOwner } from '@ember/application';
-import { computed } from '@ember/object';
 
 import fetch from 'fetch';
 
@@ -28,7 +26,7 @@ export default Service.extend({
   client: null,
 
   // options are configured in your environment.js.
-  options: computed(function() {
+  options() {
     // config:environment not injected into tests, so try to handle that gracefully.
     let config = getOwner(this).resolveRegistration('config:environment');
     if (config && config.apollo) {
@@ -37,7 +35,7 @@ export default Service.extend({
       return defaultOptions;
     }
     throw new Error('no Apollo service options defined');
-  }),
+  },
 
   init() {
     this._super(...arguments);
@@ -67,12 +65,10 @@ export default Service.extend({
   },
 
   link() {
-    const {
-      options: { apiURL: uri, requestCredentials: credentials },
-    } = this;
+    const { apiURL: uri, requestCredentials: credentials } = this.options();
     const options = { uri, fetch };
 
-    if (isPresent(credentials)) {
+    if (credentials) {
       options.credentials = credentials;
     }
     return createHttpLink(options);
