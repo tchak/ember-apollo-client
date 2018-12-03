@@ -1,6 +1,6 @@
 const extraCopyProperties = ['__typename'];
 
-export default function copyWithExtras(obj, seen, copies) {
+export default function copyWithExtras(obj, seen = [], copies = []) {
   let ret, loc, key;
 
   // primitive data types are immutable, just return them.

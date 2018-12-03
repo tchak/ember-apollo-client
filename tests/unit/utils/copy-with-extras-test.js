@@ -15,7 +15,7 @@ module('Unit | Utility | copyWithExtras', function() {
       __typename: 'testData',
     };
 
-    let result = copyWithExtras(toCopy, [], []);
+    let result = copyWithExtras(toCopy);
 
     assert.deepEqual(result, toCopy);
   });
@@ -26,7 +26,7 @@ module('Unit | Utility | copyWithExtras', function() {
       __otherAttribute: 'notATest',
     };
 
-    let result = copyWithExtras(toCopy, [], []);
+    let result = copyWithExtras(toCopy);
 
     assert.equal(result.__typename, 'test');
     assert.equal(result.__otherAttribute, undefined);

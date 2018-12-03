@@ -47,7 +47,7 @@ function extractNewData(resultKey, { data, loading }) {
   }
   let keyedData = isNone(resultKey) ? data : data && get(data, resultKey);
 
-  return copyWithExtras(keyedData || {}, [], []);
+  return copyWithExtras(keyedData || {});
 }
 
 function newDataFunc(observable, resultKey, resolve, mergedProps = {}) {
@@ -161,7 +161,7 @@ export default Service.extend({
             let dataToSend = isNone(resultKey)
               ? result.data
               : get(result.data, resultKey);
-            dataToSend = copyWithExtras(dataToSend, [], []);
+            dataToSend = copyWithExtras(dataToSend);
             return resolve(dataToSend);
           })
           .catch(error => {
@@ -283,7 +283,7 @@ export default Service.extend({
             if (!isNone(resultKey)) {
               response = get(response, resultKey);
             }
-            return resolve(copyWithExtras(response, [], []));
+            return resolve(copyWithExtras(response));
           })
           .catch(error => {
             return reject(error);
