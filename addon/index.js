@@ -1,6 +1,4 @@
-import ComponentQueryManager from 'ember-apollo-client/-private/mixins/component-query-manager';
-import ObjectQueryManager from 'ember-apollo-client/-private/mixins/object-query-manager';
-import RouteQueryManager from 'ember-apollo-client/-private/mixins/route-query-manager';
+import queryManager from 'ember-apollo-client/apollo/query-manager';
 
 export function getObservable(queryResult) {
   return queryResult._apolloObservable;
@@ -8,4 +6,4 @@ export function getObservable(queryResult) {
 
 export let apolloObservableKey = '_apolloObservable';
 
-export { ComponentQueryManager, ObjectQueryManager, RouteQueryManager };
+export { queryManager };

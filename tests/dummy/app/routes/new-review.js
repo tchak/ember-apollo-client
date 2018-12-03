@@ -10,7 +10,7 @@ export default Route.extend({
   actions: {
     createReview(ep, review) {
       let variables = { ep, review };
-      return this.get('apollo').mutate({ mutation, variables }, 'review');
+      return this.apollo.mutate({ mutation, variables }, 'review');
     },
   },
 });
