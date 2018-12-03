@@ -44,10 +44,7 @@ export default Service.extend({
 
     const options = this.configure();
     this.client = new ApolloClient(options);
-
-    if (Ember.testing) {
-      this._waitFor = waitFor();
-    }
+    this._waitFor = waitFor();
   },
 
   /**
