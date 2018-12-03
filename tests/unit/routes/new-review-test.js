@@ -50,7 +50,7 @@ module('Unit | Route | new-review', function(hooks) {
         };
       },
     };
-    route.set('apollo', apollo);
+    route.apollo = apollo;
 
     // actually send the createReview action
     run(() => {

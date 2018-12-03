@@ -1,8 +1,10 @@
 import Route from '@ember/routing/route';
-import { RouteQueryManager } from 'ember-apollo-client';
+import { queryManager } from 'ember-apollo-client';
+
 import query from 'dummy/gql/queries/characters';
 
-export default Route.extend(RouteQueryManager, {
+export default Route.extend({
+  apollo: queryManager(),
   queryParams: {
     kind: {
       refreshModel: true,
@@ -10,6 +12,6 @@ export default Route.extend(RouteQueryManager, {
   },
 
   model(variables) {
-    return this.get('apollo').watchQuery({ query, variables }, 'characters');
+    return this.apollo.watchQuery({ query, variables }, 'characters');
   },
 });

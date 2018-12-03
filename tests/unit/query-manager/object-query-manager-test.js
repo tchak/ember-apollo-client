@@ -1,14 +1,15 @@
 import EmberObject from '@ember/object';
-import { ComponentQueryManager } from 'ember-apollo-client';
+import { queryManager } from 'ember-apollo-client';
+import { ApolloClient } from 'apollo-client';
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
 
-module('Unit | Mixin | component query manager', function(hooks) {
+module('Unit | queryManager | ember object query manager', function(hooks) {
   setupTest(hooks);
 
   hooks.beforeEach(function() {
     this.subject = function() {
-      let TestObject = EmberObject.extend(ComponentQueryManager);
+      let TestObject = EmberObject.extend({ apollo: queryManager() });
       this.owner.register('test-container:test-object', TestObject);
       return this.owner.lookup('test-container:test-object');
     };
@@ -19,8 +20,8 @@ module('Unit | Mixin | component query manager', function(hooks) {
     let subject = this.subject();
     let unsubscribeCalled = 0;
 
-    let apolloService = subject.get('apollo.apollo');
-    apolloService.set('managedWatchQuery', (manager, opts) => {
+    let apolloService = subject.apollo.service;
+    apolloService.managedWatchQuery = (manager, opts) => {
       assert.deepEqual(opts, { query: 'fakeQuery' });
       manager.trackSubscription({
         unsubscribe() {
@@ -28,12 +29,12 @@ module('Unit | Mixin | component query manager', function(hooks) {
         },
       });
       return {};
-    });
+    };
 
-    subject.get('apollo').watchQuery({ query: 'fakeQuery' });
-    subject.get('apollo').watchQuery({ query: 'fakeQuery' });
+    subject.apollo.watchQuery({ query: 'fakeQuery' });
+    subject.apollo.watchQuery({ query: 'fakeQuery' });
 
-    subject.willDestroyElement();
+    subject.willDestroy();
     assert.equal(
       unsubscribeCalled,
       2,
@@ -47,8 +48,8 @@ module('Unit | Mixin | component query manager', function(hooks) {
     let subject = this.subject();
     let unsubscribeCalled = 0;
 
-    let apolloService = subject.get('apollo.apollo');
-    apolloService.set('managedSubscribe', (manager, opts) => {
+    let apolloService = subject.apollo.service;
+    apolloService.managedSubscribe = (manager, opts) => {
       assert.deepEqual(opts, { query: 'fakeSubscription' });
       manager.trackSubscription({
         unsubscribe() {
@@ -56,17 +57,23 @@ module('Unit | Mixin | component query manager', function(hooks) {
         },
       });
       return {};
-    });
+    };
 
-    subject.get('apollo').subscribe({ query: 'fakeSubscription' });
-    subject.get('apollo').subscribe({ query: 'fakeSubscription' });
+    subject.apollo.subscribe({ query: 'fakeSubscription' });
+    subject.apollo.subscribe({ query: 'fakeSubscription' });
 
-    subject.willDestroyElement();
+    subject.willDestroy();
     assert.equal(
       unsubscribeCalled,
       2,
       '_apolloUnsubscribe() was called once per subscribe'
     );
     done();
+  });
+
+  test('it exposes an apollo client object', function(assert) {
+    let subject = this.subject();
+    let client = subject.apollo.client;
+    assert.ok(client instanceof ApolloClient);
   });
 });
