@@ -1,5 +1,4 @@
 import Ember from 'ember';
-import RSVP from 'rsvp';
 
 import Service from '@ember/service';
 import EmberObject, { get, setProperties, computed } from '@ember/object';
@@ -9,7 +8,6 @@ import { isNone, isPresent } from '@ember/utils';
 import { getOwner } from '@ember/application';
 import { assign } from '@ember/polyfills';
 import { run } from '@ember/runloop';
-import { registerWaiter } from '@ember/test';
 import Evented from '@ember/object/evented';
 
 import fetch from 'fetch';
@@ -21,6 +19,7 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 import { apolloObservableKey } from 'ember-apollo-client';
 import copyWithExtras from '../utils/copy-with-extras';
 import { resolveWith, rejectWith } from '../apollo/query-resolver';
+import waitFor from '../utils/wait-for';
 
 const EmberApolloSubscription = EmberObject.extend(Evented, {
   lastEvent: null,
@@ -108,7 +107,7 @@ export default Service.extend({
     this.client = new ApolloClient(options);
 
     if (Ember.testing) {
-      this._registerWaiter();
+      this._waitFor = waitFor();
     }
   },
 
@@ -266,40 +265,5 @@ export default Service.extend({
 
       resolve(obj);
     });
-  },
-
-  /**
-   * Wraps a promise in test waiters.
-   *
-   * @param {!Promise} promise
-   * @return {!Promise}
-   * @private
-   */
-  _waitFor(resolver) {
-    const promise = new RSVP.Promise(resolver);
-    this._incrementOngoing();
-    return promise.finally(() => this._decrementOngoing());
-  },
-
-  // unresolved / ongoing requests, used for tests:
-  _ongoing: 0,
-
-  _incrementOngoing() {
-    this._ongoing++;
-  },
-
-  _decrementOngoing() {
-    this._ongoing--;
-  },
-
-  _shouldWait() {
-    return this._ongoing === 0;
-  },
-
-  _registerWaiter() {
-    this._waiter = () => {
-      return this._shouldWait();
-    };
-    registerWaiter(this._waiter);
   },
 });
