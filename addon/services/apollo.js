@@ -140,7 +140,7 @@ export default Service.extend({
       const subscription = observable.subscribe(observer);
 
       if (manager) {
-        manager.trackSubscription(subscription);
+        manager.trackSubscription(unsubscribe);
       }
     });
   },
@@ -172,7 +172,7 @@ export default Service.extend({
       const subscription = observable.subscribe(observer);
 
       if (manager) {
-        manager.trackSubscription(subscription);
+        manager.trackSubscription(unsubscribe);
       }
     });
   },

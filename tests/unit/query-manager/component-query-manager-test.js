@@ -24,11 +24,7 @@ module('Unit | queryManager | component query manager', function(hooks) {
     let apolloService = subject.apollo.service;
     apolloService.watchQuery = (opts, _, manager) => {
       assert.deepEqual(opts, { query: 'fakeQuery' });
-      manager.trackSubscription({
-        unsubscribe() {
-          unsubscribeCalled++;
-        },
-      });
+      manager.trackSubscription(() => unsubscribeCalled++);
       return {};
     };
 
@@ -39,7 +35,7 @@ module('Unit | queryManager | component query manager', function(hooks) {
     assert.equal(
       unsubscribeCalled,
       2,
-      '_apolloUnsubscribe() was called once per watchQuery'
+      'unsubscribe() was called once per watchQuery'
     );
     done();
   });
@@ -52,11 +48,7 @@ module('Unit | queryManager | component query manager', function(hooks) {
     let apolloService = subject.apollo.service;
     apolloService.subscribe = (opts, _, manager) => {
       assert.deepEqual(opts, { query: 'fakeSubscription' });
-      manager.trackSubscription({
-        unsubscribe() {
-          unsubscribeCalled++;
-        },
-      });
+      manager.trackSubscription(() => unsubscribeCalled++);
       return {};
     };
 
@@ -67,7 +59,7 @@ module('Unit | queryManager | component query manager', function(hooks) {
     assert.equal(
       unsubscribeCalled,
       2,
-      '_apolloUnsubscribe() was called once per subscribe'
+      'unsubscribe() was called once per subscribe'
     );
     done();
   });

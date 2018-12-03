@@ -16,7 +16,7 @@ export class QueryManager {
   constructor(service) {
     this.service = service;
     this.client = service.client;
-    this.activeSubscriptions = [];
+    this.subscriptions = [];
   }
 
   /**
@@ -92,8 +92,8 @@ export class QueryManager {
    * @param {!Object} subscription The Apollo Client Subscription to be tracked for future unsubscription.
    * @private
    */
-  trackSubscription(subscription) {
-    this.activeSubscriptions.push({ subscription, stale: false });
+  trackSubscription(unsubscribe) {
+    this.subscriptions.push({ unsubscribe, stale: false });
   }
 
   /**
@@ -104,7 +104,7 @@ export class QueryManager {
    * @private
    */
   markSubscriptionsStale() {
-    this.activeSubscriptions.forEach(subscription => {
+    this.subscriptions.forEach(subscription => {
       subscription.stale = true;
     });
   }
@@ -121,11 +121,11 @@ export class QueryManager {
    * @public
    */
   unsubscribeAll(onlyStale = false) {
-    this.activeSubscriptions.forEach(subscription => {
-      if (!onlyStale || subscription.stale) {
-        subscription.subscription.unsubscribe();
+    this.subscriptions.forEach(({ unsubscribe, stale }) => {
+      if (!onlyStale || stale) {
+        unsubscribe();
       }
     });
-    this.activeSubscriptions = [];
+    this.subscriptions = [];
   }
 }
