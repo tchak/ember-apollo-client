@@ -1,4 +1,4 @@
-const extraCopyProperties = ['__typename'];
+const extraCopyProperties = ['__typename', '__type'];
 
 export default function copyWithExtras(obj, seen = [], copies = []) {
   let ret, loc, key;
@@ -40,9 +40,11 @@ export default function copyWithExtras(obj, seen = [], copies = []) {
 
       ret[key] = copyWithExtras(obj[key], seen, copies);
     }
-    extraCopyProperties.forEach(
-      propertyName => (ret[propertyName] = obj[propertyName])
-    );
+    for (let propertyName of extraCopyProperties) {
+      if (obj[propertyName]) {
+        ret[propertyName] = obj[propertyName];
+      }
+    }
   }
 
   seen.push(obj);
