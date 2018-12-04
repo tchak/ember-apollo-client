@@ -129,7 +129,7 @@ module('Unit | Service | apollo', function(hooks) {
 
     const result = await service.subscribe(
       {
-        subscription: testSubscription,
+        query: testSubscription,
       },
       'human'
     );

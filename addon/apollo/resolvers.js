@@ -1,12 +1,12 @@
 import Ember from 'ember';
 import { get, set } from '@ember/object';
 import { isPresent } from '@ember/utils';
-import { assign } from '@ember/polyfills';
 import { setProperties } from '@ember/object';
 import Evented from '@ember/object/evented';
 import { run } from '@ember/runloop';
 
 import copyWithExtras from '../utils/copy-with-extras';
+import { setMeta } from './meta';
 
 export function resolveWith(resolve, resultKey) {
   return result => {
@@ -30,60 +30,29 @@ export function rejectWith(reject) {
   };
 }
 
-export function getObservable(result) {
-  const subscription = SUBSCRIPTIONS.get(result);
-  return subscription && subscription.observable;
-}
-
-export function unsubscribe(result) {
-  const subscription = SUBSCRIPTIONS.get(result);
-  if (subscription && subscription.unsubscribe) {
-    subscription.unsubscribe();
-  }
-}
-
-export function decorateResult(result, subscription) {
-  SUBSCRIPTIONS.set(result, subscription);
-}
-
-const SUBSCRIPTIONS = new WeakMap();
-
-export function subscriptionObserver(resultKey, resolve, reject, subscription) {
-  let result = createSubscriptionResult();
-  decorateResult(result, subscription);
-  resolve(result);
-
-  return {
-    next: newData => {
-      let data = extractData(resultKey, newData);
-
-      if (data) {
-        updateSubscriptionResult(result, data);
-      }
-    },
-    error(e) {
-      reject(e);
-    },
-  };
-}
-
-export function watchQueryObserver(resultKey, resolve, reject, subscription) {
+export function createObserver(resultKey, resolver, meta) {
   let result;
+
+  if (meta.isSubscription) {
+    result = new ApolloSubscription();
+    setMeta(result, meta);
+    resolver.resolve(result);
+  }
 
   return {
     next: newData => {
       let data = extractData(resultKey, newData);
 
       if (!result) {
-        result = createWatchQueryResult(data);
-        decorateResult(result, subscription);
-        resolve(result);
-      } else {
-        updateWatchQueryResult(result, data);
+        result = data || {};
+        setMeta(result, meta);
+        resolver.resolve(result);
+      } else if (data) {
+        updateResult(result, data);
       }
     },
     error(e) {
-      reject(e);
+      resolver.reject(e);
     },
   };
 }
@@ -102,26 +71,22 @@ function extractData(resultKey, { data, loading }) {
   return copyWithExtras(keyedData || {});
 }
 
+function updateResult(result, data) {
+  if (result instanceof ApolloSubscription) {
+    updateSubscriptionResult(result, data);
+  } else {
+    updateWatchQueryResult(result, data);
+  }
+}
+
 const ApolloSubscription = function() {};
 ApolloSubscription.prototype = Evented.mixins[0].properties;
-
-function createSubscriptionResult() {
-  return new ApolloSubscription();
-}
 
 function updateSubscriptionResult(result, data) {
   run(() => {
     set(result, 'lastEvent', data);
     result.trigger('event', data);
   });
-}
-
-function createWatchQueryResult(data) {
-  if (Array.isArray(data)) {
-    return data.concat([]);
-  } else {
-    return assign({}, data);
-  }
 }
 
 function updateWatchQueryResult(result, data) {

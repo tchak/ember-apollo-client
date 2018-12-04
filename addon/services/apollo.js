@@ -10,12 +10,7 @@ import { createHttpLink } from 'apollo-link-http';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 
 import waitFor from '../utils/wait-for';
-import {
-  resolveWith,
-  rejectWith,
-  subscriptionObserver,
-  watchQueryObserver,
-} from '../apollo/resolvers';
+import { resolveWith, rejectWith, createObserver } from '../apollo/resolvers';
 
 // used in environments without injected `config:environment` (i.e. unit tests):
 const defaultOptions = {
@@ -133,10 +128,14 @@ export default Service.extend({
 
     return this._waitFor((resolve, reject) => {
       const unsubscribe = () => subscription.unsubscribe();
-      const observer = watchQueryObserver(resultKey, resolve, reject, {
-        observable,
-        unsubscribe,
-      });
+      const observer = createObserver(
+        resultKey,
+        { resolve, reject },
+        {
+          observable,
+          unsubscribe,
+        }
+      );
       const subscription = observable.subscribe(observer);
 
       if (manager) {
@@ -165,10 +164,15 @@ export default Service.extend({
 
     return this._waitFor((resolve, reject) => {
       const unsubscribe = () => subscription.unsubscribe();
-      const observer = subscriptionObserver(resultKey, resolve, reject, {
-        observable,
-        unsubscribe,
-      });
+      const observer = createObserver(
+        resultKey,
+        { resolve, reject },
+        {
+          isSubscription: true,
+          observable,
+          unsubscribe,
+        }
+      );
       const subscription = observable.subscribe(observer);
 
       if (manager) {
