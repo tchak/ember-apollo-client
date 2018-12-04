@@ -9,13 +9,9 @@ import { ApolloClient } from 'apollo-client';
 import { createHttpLink } from 'apollo-link-http';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 
-import waitFor from '../utils/wait-for';
-import { resolveWith, rejectWith, createObserver } from '../apollo/resolvers';
-
-// used in environments without injected `config:environment` (i.e. unit tests):
-const defaultOptions = {
-  apiURL: 'http://testserver.example/v1/graph',
-};
+import waitFor from '../-private/wait-for';
+import { resolveWith, rejectWith } from '../-private/resolvers';
+import createObserver from '../-private/create-observer';
 
 export default Service.extend({
   client: null,
@@ -27,7 +23,7 @@ export default Service.extend({
     if (config && config.apollo) {
       return config.apollo;
     } else if (Ember.testing) {
-      return defaultOptions;
+      return { apiURL: 'http://testserver.example/v1/graph' };
     }
     throw new Error('no Apollo service options defined');
   },

@@ -1,7 +1,7 @@
 import { computed } from '@ember/object';
 import { getOwner } from '@ember/application';
 
-import setupHooks from './setup-hooks';
+import setupHooks from '../-private/setup-hooks';
 
 export default function queryManager() {
   return computed(function() {

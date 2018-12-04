@@ -1,36 +1,13 @@
 import Ember from 'ember';
-import { get, set } from '@ember/object';
-import { isPresent } from '@ember/utils';
+import { set } from '@ember/object';
 import { setProperties } from '@ember/object';
 import Evented from '@ember/object/evented';
 import { run } from '@ember/runloop';
 
-import copyWithExtras from '../utils/copy-with-extras';
+import extractData from './extract-data';
 import { setMeta } from './meta';
 
-export function resolveWith(resolve, resultKey) {
-  return result => {
-    return resolve(extractData(resultKey, result));
-  };
-}
-
-export function rejectWith(reject) {
-  return error => {
-    let errors;
-    if (isPresent(error.networkError)) {
-      error.networkError.code = 'network_error';
-      errors = [error.networkError];
-    } else if (isPresent(error.graphQLErrors)) {
-      errors = error.graphQLErrors;
-    }
-    if (errors) {
-      return reject({ errors });
-    }
-    throw error;
-  };
-}
-
-export function createObserver(resultKey, resolver, meta) {
+export default function createObserver(resultKey, resolver, meta) {
   let result;
 
   if (meta.isSubscription) {
@@ -41,7 +18,7 @@ export function createObserver(resultKey, resolver, meta) {
 
   return {
     next: newData => {
-      let data = extractData(resultKey, newData);
+      let data = extractData(newData, resultKey);
 
       if (!result) {
         result = data || {};
@@ -55,20 +32,6 @@ export function createObserver(resultKey, resolver, meta) {
       resolver.reject(e);
     },
   };
-}
-
-function extractData(resultKey, { data, loading }) {
-  if (loading && !data) {
-    // This happens when the cache has no data and the data is still loading
-    // from the server. We don't want to resolve the promise with empty data
-    // so we instead just bail out.
-    //
-    // See https://github.com/bgentry/ember-apollo-client/issues/45
-    return null;
-  }
-  const keyedData = !resultKey ? data : data && get(data, resultKey);
-
-  return copyWithExtras(keyedData || {});
 }
 
 function updateResult(result, data) {

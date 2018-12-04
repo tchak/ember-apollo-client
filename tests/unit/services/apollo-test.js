@@ -6,7 +6,7 @@ import testMutation from '../build/test-mutation';
 import testSubscription from '../build/test-subscription';
 import { Promise } from 'rsvp';
 
-module('Unit | Service | apollo', function(hooks) {
+module('Unit | Service | Apollo', function(hooks) {
   setupTest(hooks);
 
   test('it exists', function(assert) {
