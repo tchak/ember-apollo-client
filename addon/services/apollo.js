@@ -4,17 +4,31 @@ import Service from '@ember/service';
 import { getOwner } from '@ember/application';
 
 import fetch from 'fetch';
+import RSVP from 'rsvp';
+
+import { registerWaiter } from '@ember/test';
 
 import { ApolloClient } from 'apollo-client';
 import { createHttpLink } from 'apollo-link-http';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 
-import waitFor from '../-private/wait-for';
 import { resolveWith, rejectWith } from '../-private/resolvers';
 import createObserver from '../-private/create-observer';
 
 export default Service.extend({
   client: null,
+
+  init() {
+    this._super(...arguments);
+
+    const options = this.configure();
+    this.client = new ApolloClient(options);
+
+    if (Ember.testing) {
+      this.__ongoing = 0;
+      registerWaiter(() => this.__ongoing === 0);
+    }
+  },
 
   // options are configured in your environment.js.
   options() {
@@ -26,14 +40,6 @@ export default Service.extend({
       return { apiURL: 'http://testserver.example/v1/graph' };
     }
     throw new Error('no Apollo service options defined');
-  },
-
-  init() {
-    this._super(...arguments);
-
-    const options = this.configure();
-    this.client = new ApolloClient(options);
-    this._waitFor = waitFor();
   },
 
   /**
@@ -76,7 +82,7 @@ export default Service.extend({
    * @public
    */
   mutate(opts, resultKey) {
-    return this._waitFor((resolve, reject) => {
+    return this.waitFor((resolve, reject) => {
       this.client
         .mutate(opts)
         .then(resolveWith(resolve, resultKey))
@@ -95,7 +101,7 @@ export default Service.extend({
    * @public
    */
   query(opts, resultKey = null) {
-    return this._waitFor((resolve, reject) => {
+    return this.waitFor((resolve, reject) => {
       this.client
         .query(opts)
         .then(resolveWith(resolve, resultKey))
@@ -122,7 +128,7 @@ export default Service.extend({
   watchQuery(opts, resultKey = null, manager = null) {
     let observable = this.client.watchQuery(opts);
 
-    return this._waitFor((resolve, reject) => {
+    return this.waitFor((resolve, reject) => {
       const unsubscribe = () => subscription.unsubscribe();
       const observer = createObserver(
         resultKey,
@@ -158,7 +164,7 @@ export default Service.extend({
   subscribe(opts, resultKey = null, manager = null) {
     const observable = this.client.subscribe(opts);
 
-    return this._waitFor((resolve, reject) => {
+    return this.waitFor((resolve, reject) => {
       const unsubscribe = () => subscription.unsubscribe();
       const observer = createObserver(
         resultKey,
@@ -175,5 +181,16 @@ export default Service.extend({
         manager.trackSubscription(unsubscribe);
       }
     });
+  },
+
+  waitFor(resolver) {
+    const promise = new RSVP.Promise(resolver);
+    if (Ember.testing) {
+      this.__ongoing++;
+      return promise.finally(() => {
+        this.__ongoing--;
+      });
+    }
+    return promise;
   },
 });
