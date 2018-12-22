@@ -551,47 +551,6 @@ actions: {
 }
 ```
 
-### Testing
-
-This addon is test-ready! All promises from the apollo service are tracked with
-`Ember.Test.registerWaiter`, so your tests should be completely deterministic.
-
-The dummy app contains example routes for mutations and queries:
-
-* [Acceptance test for a regular query](https://github.com/bgentry/ember-apollo-client/blob/master/tests/acceptance/query-and-unsubscribe-test.js)
-* [Route integration test for a mutation with a fragment](https://github.com/bgentry/ember-apollo-client/blob/master/tests/unit/routes/new-review-test.js)
-
-The tests also contain a sample Star Wars GraphQL schema with an
-[ember-cli-pretender setup][pretender-setup] for mock data.
-
-[pretender-setup]: https://github.com/bgentry/ember-apollo-client/blob/master/tests/helpers/start-pretender.js
-
-## Development
-
-### Installation
-
-* `git clone https://github.com/bgentry/ember-apollo-client` this repository
-* `cd ember-apollo-client`
-* `yarn install`
-
-### Linting
-
-* `yarn run lint:js`
-* `yarn run lint:js -- --fix`
-
-### Running tests
-
-* `ember test` – Runs the test suite on the current Ember version
-* `ember test --server` – Runs the test suite in "watch mode"
-* `ember try:each` – Runs the test suite against multiple Ember versions
-
-### Running the dummy application
-
-* `ember serve`
-* Visit the dummy application at [http://localhost:4200](http://localhost:4200).
-
-For more information on using ember-cli, visit [https://ember-cli.com/](https://ember-cli.com/).
-
 ## Contributors
 
 A special thanks to the following contributors:
