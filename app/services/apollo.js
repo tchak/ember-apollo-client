@@ -1,1 +1,1 @@
-export { default } from 'ember-apollo-client/services/apollo';
+export { default } from '@tchak/ember-apollo-client/services/apollo';

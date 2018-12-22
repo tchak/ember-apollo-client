@@ -1,6 +1,6 @@
 {
-  "name": "ember-apollo-client",
-  "version": "2.0.0-beta.1",
+  "name": "@tchak/ember-apollo-client",
+  "version": "0.1.0",
   "description": "An ember-cli addon for the Apollo GraphQL Client.",
   "keywords": [
     "ember-addon",
@@ -10,7 +10,7 @@
     "graphql",
     "graphql-client"
   ],
-  "repository": "https://github.com/bgentry/ember-apollo-client",
+  "repository": "https://github.com/tchak/ember-apollo-client",
   "license": "MIT",
   "author": "Blake Gentry",
   "directories": {

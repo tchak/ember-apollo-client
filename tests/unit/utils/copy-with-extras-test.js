@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 
-import copyWithExtras from 'ember-apollo-client/-private/copy-with-extras';
+import copyWithExtras from '@tchak/ember-apollo-client/-private/copy-with-extras';
 
 module('Unit | Utility | copyWithExtras', function() {
   test('copies all properties and extraCopyProperties', function(assert) {

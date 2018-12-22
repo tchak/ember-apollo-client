@@ -1,7 +1,7 @@
 import { module, test } from 'qunit';
 
-import { setMeta } from 'ember-apollo-client/-private/meta';
-import { getObservable } from 'ember-apollo-client';
+import { setMeta } from '@tchak/ember-apollo-client/-private/meta';
+import { getObservable } from '@tchak/ember-apollo-client';
 
 module('Unit | Utility | getObservable', function() {
   test('it should return the observable from a result object', function(assert) {

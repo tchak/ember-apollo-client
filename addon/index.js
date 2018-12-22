@@ -1,8 +1,8 @@
 export {
   default as queryManager,
-} from 'ember-apollo-client/apollo/query-manager';
+} from '@tchak/ember-apollo-client/apollo/query-manager';
 
-import { getMeta } from 'ember-apollo-client/-private/meta';
+import { getMeta } from '@tchak/ember-apollo-client/-private/meta';
 
 export function getObservable(result) {
   const meta = getMeta(result);

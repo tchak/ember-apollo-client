@@ -1,4 +1,4 @@
-import ApolloService from 'ember-apollo-client/services/apollo';
+import ApolloService from '@tchak/ember-apollo-client/services/apollo';
 import {
   InMemoryCache,
   IntrospectionFragmentMatcher,

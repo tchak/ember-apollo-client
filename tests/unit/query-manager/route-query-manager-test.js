@@ -1,5 +1,5 @@
 import Route from '@ember/routing/route';
-import { queryManager } from 'ember-apollo-client';
+import { queryManager } from '@tchak/ember-apollo-client';
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
 

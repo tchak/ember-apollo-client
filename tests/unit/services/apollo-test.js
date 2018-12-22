@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
-import ApolloService from 'ember-apollo-client/services/apollo';
+import ApolloService from '@tchak/ember-apollo-client/services/apollo';
 import testQuery from '../build/test-query';
 import testMutation from '../build/test-mutation';
 import testSubscription from '../build/test-subscription';
