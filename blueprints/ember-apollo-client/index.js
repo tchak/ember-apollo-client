@@ -10,7 +10,7 @@ module.exports = {
    */
   afterInstall() {
     return this.addPackagesToProject([
-      { name: 'ember-fetch', target: '^6.2.2' },
+      { name: 'ember-fetch', target: '^6.4.0' },
     ]);
   },
 };
