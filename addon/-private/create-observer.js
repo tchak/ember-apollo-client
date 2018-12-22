@@ -1,6 +1,4 @@
-import Ember from 'ember';
-import { set } from '@ember/object';
-import { setProperties } from '@ember/object';
+import { set, setProperties, notifyPropertyChange } from '@ember/object';
 import Evented from '@ember/object/evented';
 import { run } from '@ember/runloop';
 
@@ -56,7 +54,7 @@ function updateWatchQueryResult(result, data) {
   run(() => {
     if (Array.isArray(result)) {
       result.splice(0, result.length, ...data);
-      Ember.notifyPropertyChange(result, 'length');
+      notifyPropertyChange(result, 'length');
     } else {
       setProperties(result, data);
     }
