@@ -15,23 +15,25 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 import { resolveWith, rejectWith } from '../-private/resolvers';
 import createObserver from '../-private/create-observer';
 
-export default Service.extend({
-  client: null,
-
+export default class extends Service {
   init() {
-    this._super(...arguments);
-
-    const options = this.configure();
-    this.client = new ApolloClient(options);
+    this.client = new ApolloClient(this.clientOptions());
 
     if (Ember.testing) {
       this.__ongoing = 0;
       registerWaiter(() => this.__ongoing === 0);
     }
-  },
+  }
 
-  // options are configured in your environment.js.
-  options() {
+  /**
+   * This is the options hash that will be passed to the ApolloLink constructor.
+   * You can override it if you wish to customize the ApolloLink.
+   *
+   * @method linkOptions
+   * @return {!Object}
+   * @public
+   */
+  linkOptions() {
     // config:environment not injected into tests, so try to handle that gracefully.
     let config = getOwner(this).resolveRegistration('config:environment');
     if (config && config.apollo) {
@@ -40,7 +42,7 @@ export default Service.extend({
       return { apiURL: 'http://testserver.example/v1/graph' };
     }
     throw new Error('no Apollo service options defined');
-  },
+  }
 
   /**
    * This is the options hash that will be passed to the ApolloClient constructor.
@@ -50,26 +52,25 @@ export default Service.extend({
    * @return {!Object}
    * @public
    */
-  configure() {
+  clientOptions() {
     return {
-      link: this.link(),
+      link: this.link(this.linkOptions()),
       cache: this.cache(),
     };
-  },
+  }
 
   cache() {
     return new InMemoryCache();
-  },
+  }
 
-  link() {
-    const { apiURL: uri, requestCredentials: credentials } = this.options();
+  link({ apiURL: uri, requestCredentials: credentials }) {
     const options = { uri, fetch };
 
     if (credentials) {
       options.credentials = credentials;
     }
     return createHttpLink(options);
-  },
+  }
 
   /**
    * Executes a mutation on the Apollo client. The resolved object will
@@ -88,7 +89,7 @@ export default Service.extend({
         .then(resolveWith(resolve, resultKey))
         .catch(rejectWith(reject));
     });
-  },
+  }
 
   /**
    * Executes a single `query` on the Apollo client. The resolved object will
@@ -107,7 +108,7 @@ export default Service.extend({
         .then(resolveWith(resolve, resultKey))
         .catch(rejectWith(reject));
     });
-  },
+  }
 
   /**
    * Executes a `watchQuery` on the Apollo client. If updated data for this
@@ -134,6 +135,7 @@ export default Service.extend({
         resultKey,
         { resolve, reject },
         {
+          service: this,
           observable,
           unsubscribe,
         }
@@ -144,7 +146,7 @@ export default Service.extend({
         manager.trackSubscription(unsubscribe);
       }
     });
-  },
+  }
 
   /**
    * Executes a `subscribe` on the Apollo client. If this subscription receives
@@ -171,6 +173,7 @@ export default Service.extend({
         { resolve, reject },
         {
           isSubscription: true,
+          service: this,
           observable,
           unsubscribe,
         }
@@ -181,7 +184,7 @@ export default Service.extend({
         manager.trackSubscription(unsubscribe);
       }
     });
-  },
+  }
 
   waitFor(resolver) {
     const promise = new RSVP.Promise(resolver);
@@ -192,5 +195,5 @@ export default Service.extend({
       });
     }
     return promise;
-  },
-});
+  }
+}
